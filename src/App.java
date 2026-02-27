@@ -99,8 +99,6 @@ public class App {
             String userAddress1 = scanner.nextLine();
 
             // 중복된 회원 정보가 있는 지 확인
-            
-
 
             System.out.print("[ 입력한 정보를 확인 ]");
             System.out.println("사용자 ID : " + userId);
