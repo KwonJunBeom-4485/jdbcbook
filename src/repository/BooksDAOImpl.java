@@ -181,7 +181,6 @@ public class BooksDAOImpl implements Books {
         return result;
     }
 
-    // 기왕이면 빌린 상태에서 똑같은 사람이 똑같은 책을 빌릴 수 없도록 조회하는 코드가 있으면 좋을 듯 하다.
     @Override
     public boolean rentalBookAdd(RentalDTO rentalDTO) {
         boolean result = false;
@@ -243,16 +242,17 @@ public class BooksDAOImpl implements Books {
     }
 
     @Override
-    public boolean rentalMod(RentalDTO rentalDTO) {
+    public boolean rentalMod(String bookId, String memId) {
         boolean result = false;
 
         try (Connection conn = DButil.getConnection()) {
-            String sql = "update Rental set returnDate = ?, status = ? where id = ?";
+            String sql = "update Rental set returnDate = ?, status = ? where bookId = ? and memId = ? and status = 'Rented'";
 
             PreparedStatement pstmt = conn.prepareStatement(sql);
             pstmt.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
-            pstmt.setString(2, "Returned");
-            pstmt.setLong(3, rentalDTO.getId());
+            pstmt.setString(2, "Returned"); // 반납
+            pstmt.setString(3, bookId);
+            pstmt.setString(4, memId);
             if (pstmt.executeUpdate() != 0)
                 result = true;
 
@@ -264,4 +264,33 @@ public class BooksDAOImpl implements Books {
         return result;
     }
 
+    // 사용자 하나가 대여 중인 책만 골라 검색
+    public List<RentalDTO> onlyRented(String memId) {
+        List<RentalDTO> list = new ArrayList<>();
+
+        try (Connection conn = DButil.getConnection()) {
+            String sql = "select * from Rental where memId = ? and status = 'Rented'";
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+
+            pstmt.setString(1, memId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(RentalDTO.builder()
+                        .id(rs.getLong("id"))
+                        .rentalBookId(rs.getString("bookId"))
+                        .rentalMemId(rs.getString("memId"))
+                        .rentalDate(rs.getTimestamp("rentalDate"))
+                        .returnDate(rs.getTimestamp("returnDate"))
+                        .status(rs.getString("status"))
+                        .build());
+            }
+
+        } catch (Exception e) {
+            System.out.println("DB 작업 실패!!");
+            System.out.println(e.getMessage());
+        }
+
+        return list;
+    }
 }

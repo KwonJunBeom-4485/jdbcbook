@@ -151,34 +151,64 @@ public class BookAndMemberController {
             return false;
         }
 
-        // 둘 중 하나라도 검색 되지 않는다면 = 없다면 false
-        if (!memberService.checkedByMemId(memId) || !bookService.bookSearch(bookInfo.getBookId()))
-            return false;
+        // 둘 중 하나라도 검색 되지 않는다면 = 없다면 false (bookSearch는 없으면 true)
+        // if (!memberService.checkedByMemId(memId) || bookService.bookSearch(bookInfo.getBookId()))
+        //     return false;
 
         // 대여 테이블에 넣을 정보 입력 (null이나 0은 어짜피 rentalBookAdd() 에서 다루지 않는 데이터)
         RentalDTO rentalDTO = new RentalDTO(0, bookInfo.getBookId(), memId, null, null, null);
 
         // 대여 추가 성공 시 수량이 1 감소된 BookDTO 객체를 생성해 정보를 수정한다.(그냥 setter로 하면 안됨? -> 안돼 하지마)
-        if (bookService.rentalBookAdd(rentalDTO)) {
-            BookDTO bookAfterInfo = BookDTO.builder()
+        BookDTO bookAfterInfo = BookDTO.builder()
+                .id(bookInfo.getId())
+                .bookId(bookInfo.getBookId())
+                .title(bookInfo.getTitle())
+                .publish(bookInfo.getPublish())
+                .author(bookInfo.getAuthor())
+                .publicDate(bookInfo.getPublicDate())
+                .stock(bookInfo.getStock() - 1)
+                .build();
+
+        // 수정 성공 시, 최종적으로 작업 성공 = true
+        if (bookService.rentalBookAdd(rentalDTO) && bookService.bookMod(bookAfterInfo, bookId))
+            result = true;
+
+        return result;
+    }
+
+    public boolean returnBook(String bookId, String memId) {
+
+        boolean result = false;
+        BookDTO bookInfo = bookService.bookSeachInfo(bookId);
+
+        if (bookInfo != null) {
+
+            BookDTO incrementBook = BookDTO.builder()
                     .id(bookInfo.getId())
                     .bookId(bookInfo.getBookId())
                     .title(bookInfo.getTitle())
                     .publish(bookInfo.getPublish())
                     .author(bookInfo.getAuthor())
                     .publicDate(bookInfo.getPublicDate())
-                    .stock(bookInfo.getStock() - 1)
+                    .stock(bookInfo.getStock() + 1) // 반납하면 재고가 늘어나도록
                     .build();
 
-            // 수정 성공 시, 최종적으로 작업 성공 = true
-            if (bookService.bookMod(bookAfterInfo, bookId))
+            if (bookService.rentalMod(bookId, memId) && bookService.bookMod(incrementBook, bookId))
                 result = true;
         }
 
         return result;
     }
 
-    public boolean returnBook(RentalDTO rentalDTO) {
-        return bookService.rentalMod(rentalDTO);
+    public BookDTO bookSeach(String bookId) {
+        return bookService.bookSeachInfo(bookId);
+    }
+
+    public List<RentalDTO> rentalCheck(String memId) {
+        return bookService.rentalSearch(memId);
+    }
+
+    public List<RentalDTO> onlyRented(String memId) {
+        return bookService.onlyRented(memId);
     }
 }
