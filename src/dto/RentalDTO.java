@@ -11,12 +11,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BookDTO {
+public class RentalDTO {
     private long id;
-    private String bookId;
-    private String title;
-    private String publish;
-    private String author;
-    private Timestamp publicDate;
-    private int stock;
+    private String rentalBookId;
+    private String rentalMemId;
+    private Timestamp rentalDate;
+    private Timestamp returnDate;
+    private String status;    
 }

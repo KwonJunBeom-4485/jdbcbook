@@ -272,4 +272,26 @@ public class MembersDAOImpl implements Members {
 
         return result;
     }
+
+    // 아이디로 무결성 검사
+    public boolean checkedByMemId(String memId) {
+        boolean result = false;
+
+        try (Connection conn = DButil.getConnection()) {
+            String sql = "select * from members where memId = ?";
+
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            ResultSet rs = pstmt.executeQuery();
+
+            // 일치하는 결과가 있다면 true
+            if (rs.next())
+                result = true;
+
+        } catch (Exception e) {
+            System.out.println("DB 작업 실패!!");
+            System.out.println(e.getMessage());
+        }
+
+        return result;
+    }
 }
