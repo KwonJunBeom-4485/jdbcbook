@@ -152,8 +152,9 @@ public class BookAndMemberController {
         }
 
         // 둘 중 하나라도 검색 되지 않는다면 = 없다면 false (bookSearch는 없으면 true)
-        // if (!memberService.checkedByMemId(memId) || bookService.bookSearch(bookInfo.getBookId()))
-        //     return false;
+        // if (!memberService.checkedByMemId(memId) ||
+        // bookService.bookSearch(bookInfo.getBookId()))
+        // return false;
 
         // 대여 테이블에 넣을 정보 입력 (null이나 0은 어짜피 rentalBookAdd() 에서 다루지 않는 데이터)
         RentalDTO rentalDTO = new RentalDTO(0, bookInfo.getBookId(), memId, null, null, null);

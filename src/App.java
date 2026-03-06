@@ -13,7 +13,7 @@ import dto.RentalDTO;
 public class App {
 
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    private static Scanner scanner = new Scanner(System.in);
+    private static Scanner scanner = new Scanner(System.in, "cp949"); // 이상하게 한글이 안써지네..
     private static boolean flag = false;
     private static BookAndMemberController controller = new BookAndMemberController();
     private static MemberDTO loginMember = null; // 로그인 한 유저 정보를 담는 변수
@@ -180,6 +180,7 @@ public class App {
 
         System.out.print("로그인 하시겠습니까?(Y/N) ");
         String input = scanner.nextLine().toUpperCase();
+        System.out.println();
         if (input.isEmpty() || input.charAt(0) == 'N')
             return;
 
@@ -191,7 +192,7 @@ public class App {
                 userManage(); // 관리 메뉴 진입
                 return;
             } else {
-                System.out.println("아이디 또는 패스워드가 일치하지 않습니다.");
+                System.out.println("아이디 또는 패스워드가 일치하지 않습니다.\n");
             }
         }
     }
@@ -360,17 +361,43 @@ public class App {
             return;
         }
 
-        System.out.println("=============== [ 도서 목록 ] ===============");
+        System.out.println("=====".repeat(20));
+        System.out.printf("%s %s %s %s %s %s\n",
+                padWithDots("book ID", 17),
+                padWithDots("Title", 17),
+                padWithDots("Author", 17),
+                padWithDots("Publish", 17),
+                padWithDots("PublicDate", 17),
+                padWithDots("Stock", 17));
+        System.out.println("=====".repeat(20));
         for (BookDTO bto : bookList) {
-            System.out.printf("도서 ID : %s\n", bto.getBookId());
-            System.out.printf("도서명 : %s\n", bto.getTitle());
-            System.out.printf("작가 : %s\n", bto.getAuthor());
-            System.out.printf("출판사 : %s\n", bto.getPublish());
-            // 출판날짜는 default 설정이 없어서 null일 때 그냥 출력하면 뻗을 수 있다.
-            System.out.printf("출판 날짜 : %s\n",
-                    (bto.getPublicDate() != null) ? bto.getPublicDate().toString() : "날짜 미상");
-            System.out.printf("도서 수량 : %d\n", bto.getStock());
-            System.out.println("-----".repeat(10));
+            System.out.printf("%s %s %s %s %s %d\n",
+                    padWithDots(bto.getBookId(), 17),
+                    padWithDots(bto.getTitle(), 17),
+                    padWithDots(bto.getAuthor(), 17),
+                    padWithDots(bto.getPublish(), 17),
+                    padWithDots(dateFormat.format(bto.getPublicDate()), 17),
+                    bto.getStock());
+        }
+        System.out.println("=====".repeat(20));
+    }
+
+    // 도서 출력 양식은 ai의 도움을 받아습니따
+    public static String padWithDots(String s, int totalWidth) {
+        if (s == null)
+            s = "";
+        int width = 0;
+        for (char c : s.toCharArray()) {
+            width += (c >= 0xAC00 && c <= 0xD7A3) ? 2 : 1; // 한글 2칸
+        }
+        if (width <= totalWidth) {
+            return s + " ".repeat(totalWidth - width);
+        } else {
+            int count = 0, i = 0;
+            for (; i < s.length() && count < totalWidth - 3; i++) {
+                count += (s.charAt(i) >= 0xAC00 && s.charAt(i) <= 0xD7A3) ? 2 : 1;
+            }
+            return s.substring(0, i) + "...";
         }
     }
 
@@ -450,7 +477,7 @@ public class App {
 
     public static void bookRemove() {
         System.out.println("[ 도서 삭제 ]");
-        bookAllPrint(); // index까지 보여주도록 print
+        bookAllPrint();
         List<BookDTO> bookList = controller.bookAll();
 
         if (bookList == null || bookList.isEmpty()) {
@@ -541,7 +568,7 @@ public class App {
 
             if (done.equals("Y")) {
                 if (controller.rentalBook(loginMember.getMemId(), bookId)) {
-                    System.out.println("대여 성공!");
+                    System.out.println("대여 성공!\n");
                     return;
                 }
             } else {
@@ -559,8 +586,6 @@ public class App {
             return;
         }
 
-        System.out.println("=============== [ 도서 반납 ] ===============");
-
         List<RentalDTO> rentals = controller.onlyRented(loginMember.getMemId());
 
         if (rentals == null || rentals.isEmpty()) {
@@ -568,13 +593,22 @@ public class App {
             return;
         }
 
-        for (RentalDTO r : rentals) {
-            System.out.printf("INDEX : %d\n", r.getId());
-            System.out.printf("도서 ID : %s\n", r.getRentalBookId());
-            System.out.printf("회원 ID : %s\n", r.getRentalMemId());
-            System.out.printf("대여일 : %s\n", r.getRentalDate());
-            System.out.println("-----".repeat(10));
+        System.out.println("====================== [ 도서 반납 ] =======================");
+        System.out.printf("%s %s %s %s\n",
+                padWithDots("INDEX", 10),
+                padWithDots("Book ID", 12),
+                padWithDots("Member ID", 15),
+                padWithDots("Rental Date", 12));
+
+        System.out.println("=====".repeat(12));
+        for (RentalDTO bto : rentals) {
+            System.out.printf("%s %s %s %s\n",
+                    padWithDots(String.valueOf(bto.getId()), 10),
+                    padWithDots(bto.getRentalBookId(), 12),
+                    padWithDots(bto.getRentalMemId(), 15),
+                    padWithDots(dateFormat.format(bto.getRentalDate()), 12));
         }
+        System.out.println("=====".repeat(12));
 
         System.out.print("어떤 도서를 반납하시겠습니까? (도서 ID) : ");
         String bookId = scanner.next().toUpperCase();
@@ -588,7 +622,7 @@ public class App {
         }
 
         if (controller.returnBook(bookId, loginMember.getMemId())) {
-            System.out.println("반납 성공.");
+            System.out.println("반납 성공.\n");
         }
     }
 }
